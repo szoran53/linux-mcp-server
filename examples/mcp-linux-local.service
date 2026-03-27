@@ -1,0 +1,17 @@
+[Unit]
+Description=Linux MCP Server (local - this machine)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/steve/.npm-global/bin/linux-mcp-server
+Restart=always
+RestartSec=5
+
+Environment=LOCAL_MODE=true
+Environment=TRANSPORT=http
+Environment=MCP_HTTP_PORT=3300
+Environment=MCP_HTTP_HOST=127.0.0.1
+
+[Install]
+WantedBy=default.target
