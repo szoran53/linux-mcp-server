@@ -25,6 +25,7 @@ describe('shell tools', () => {
     const exec = new MockExecutor().addResponse('whoami', ok('root'));
     const result = await handleRunCommandSudo(exec, 'whoami');
     expect(result.isError).toBeFalsy();
+    expect(exec.sudoCalls).toContain('whoami');
   });
 
   it('truncated output includes warning', async () => {
