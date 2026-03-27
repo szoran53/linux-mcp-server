@@ -25,6 +25,7 @@ describe('file tools', () => {
     await handleWriteFile(exec, '/tmp/test.txt', 'content');
     expect(exec.calls[0]).toContain('tee');
     expect(exec.calls[0]).toContain('/tmp/test.txt');
+    expect(exec.calls[0]).toContain('content');
   });
 
   it('handleListDirectory runs ls -la', async () => {
@@ -50,5 +51,11 @@ describe('file tools', () => {
     await handleDeleteFile(exec, '/tmp/test.txt', false);
     expect(exec.calls[0]).toContain('rm');
     expect(exec.calls[0]).toContain('/tmp/test.txt');
+  });
+
+  it('handleDeleteFile uses -rf for recursive delete', async () => {
+    const exec = new MockExecutor().addResponse('rm', ok(''));
+    await handleDeleteFile(exec, '/tmp/testdir', true);
+    expect(exec.calls[0]).toContain('-rf');
   });
 });

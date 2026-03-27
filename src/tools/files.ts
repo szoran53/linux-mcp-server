@@ -7,7 +7,7 @@ type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: bo
 function fromResult(result: ExecResult): ToolResult {
   if (result.exitCode !== 0) return { isError: true, content: [{ type: 'text', text: `Error (exit ${result.exitCode}): ${result.stderr}` }] };
   const text = result.truncated ? `${result.stdout}\n\n[Output truncated at 1MB]` : result.stdout;
-  return { content: [{ type: 'text', text: text }] };
+  return { content: [{ type: 'text', text: text || '(no output)' }] };
 }
 
 function safePath(path: string): string {
@@ -22,7 +22,9 @@ export async function handleReadFile(executor: ExecutionService, path: string): 
 export async function handleWriteFile(executor: ExecutionService, path: string, content: string): Promise<ToolResult> {
   // Use printf to avoid echo interpretation of escape sequences; pipe through tee
   const escaped = content.replace(/'/g, "'\\''");
-  return fromResult(await executor.run(`printf '%s' '${escaped}' | tee ${safePath(path)} > /dev/null && echo "Written to ${path}"`));
+  const result = await executor.run(`printf '%s' '${escaped}' | tee ${safePath(path)} > /dev/null`);
+  if (result.exitCode !== 0) return { isError: true, content: [{ type: 'text', text: `Error (exit ${result.exitCode}): ${result.stderr}` }] };
+  return { content: [{ type: 'text', text: `Written to ${path}` }] };
 }
 
 export async function handleListDirectory(executor: ExecutionService, path: string): Promise<ToolResult> {
@@ -34,12 +36,16 @@ export async function handleGetFileInfo(executor: ExecutionService, path: string
 }
 
 export async function handleMakeDirectory(executor: ExecutionService, path: string): Promise<ToolResult> {
-  return fromResult(await executor.run(`mkdir -p ${safePath(path)} && echo "Created: ${path}"`));
+  const result = await executor.run(`mkdir -p ${safePath(path)}`);
+  if (result.exitCode !== 0) return { isError: true, content: [{ type: 'text', text: `Error (exit ${result.exitCode}): ${result.stderr}` }] };
+  return { content: [{ type: 'text', text: `Created: ${path}` }] };
 }
 
 export async function handleDeleteFile(executor: ExecutionService, path: string, recursive: boolean): Promise<ToolResult> {
   const flag = recursive ? '-rf ' : '';
-  return fromResult(await executor.run(`rm ${flag}${safePath(path)} && echo "Deleted: ${path}"`));
+  const result = await executor.run(`rm ${flag}${safePath(path)}`);
+  if (result.exitCode !== 0) return { isError: true, content: [{ type: 'text', text: `Error (exit ${result.exitCode}): ${result.stderr}` }] };
+  return { content: [{ type: 'text', text: `Deleted: ${path}` }] };
 }
 
 export function registerFileTools(server: McpServer, executor: ExecutionService): void {
