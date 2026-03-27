@@ -31,6 +31,18 @@ export class SshExecutor implements ExecutionService {
   }
 
   private execute(command: string): Promise<ExecResult> {
+    let privateKey: Buffer;
+    try {
+      privateKey = readFileSync(this.sshConfig.keyPath);
+    } catch {
+      return Promise.resolve({
+        stdout: '',
+        stderr: `Cannot read SSH key: ${this.sshConfig.keyPath}`,
+        exitCode: 1,
+        truncated: false,
+      });
+    }
+
     return new Promise((resolve) => {
       const conn = new SshClient();
       let stdout = '';
@@ -86,14 +98,6 @@ export class SshExecutor implements ExecutionService {
           });
         });
       });
-
-      let privateKey: Buffer;
-      try {
-        privateKey = readFileSync(this.sshConfig.keyPath);
-      } catch {
-        settle({ stdout: '', stderr: `Cannot read SSH key: ${this.sshConfig.keyPath}`, exitCode: 1, truncated: false });
-        return;
-      }
 
       conn.connect({
         host: this.sshConfig.host,
