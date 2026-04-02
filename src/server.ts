@@ -10,6 +10,7 @@ import { registerLogTools } from './tools/logs.js';
 import { registerProcessTools } from './tools/processes.js';
 import { registerFileTools } from './tools/files.js';
 import { registerShellTools } from './tools/shell.js';
+import { registerZfsTools } from './tools/zfs.js';
 
 export function createExecutor(config: Config): ExecutionService {
   if (config.localMode) {
@@ -33,6 +34,7 @@ export function createServer(config: Config): McpServer {
   registerProcessTools(server, executor);
   registerFileTools(server, executor);
   registerShellTools(server, executor);
+  registerZfsTools(server, executor);
 
   return server;
 }
